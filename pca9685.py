@@ -66,12 +66,8 @@ class PCA9685:
 
     def initialize(self):
         # todo reset (write 0xb6 to i2c address 00 - general call)
-        # todo write all to zero
         self.write(REG_MODE1, [MODE1_SLEEP | MODE1_AI])
-        # this is the minimum frequency at which 1us resolution is acheived
-        self.set_pwm_frequency(245)
-        self.write(REG_MODE1, [MODE1_EXTCLK | MODE1_SLEEP | MODE1_AI])
-        self.write(REG_MODE1, [MODE1_EXTCLK | MODE1_AI])
+        self.set_pwm_frequency(250)
 
     #########################
     # Prescaler Configuration
@@ -79,28 +75,46 @@ class PCA9685:
     def get_prescaler(self):
         return self._bus.read_i2c_block_data(_address, REG_PRESCALE, 1)[0]
 
-    # pca must be in sleep mode
     def set_prescaler(self, prescaler):
-        if prescaler < 0 or prescaler > 0xff:
+        # pca must be in sleep mode
+        self.write(REG_MODE1, [MODE1_EXTCLK | MODE1_SLEEP | MODE1_AI])
+
+        # prescaler minimum limited to 3 by hardware
+        if prescaler < 3 or prescaler > 0xff:
             #print("new prescaler out of range: %s" % prescaler)
             return False
         prescaler = prescaler & 0xff
+
+        # after entering sleep mode, the output counters are disabled (the
+        # outputs go to zero) until one of the output counter registers
+        # is written. (this is not documented, and can apparently be done
+        # before or after exiting sleep mode)
+        self.raw[0] = self.raw[0]
+
+        # write the prescaler
         self.write(REG_PRESCALE, [prescaler & 0xff])
+
+        # bring out of sleep mode
+        self.write(REG_MODE1, [MODE1_EXTCLK | MODE1_AI])
+
+        # verify the prescaler
         current = self.get_prescaler()
         if current != prescaler:
             #print("error writing new prescaler. wrote: %2x read %2x" % (prescaler, current))
             return False
+
         # cache this value to be used in pwm to duty conversions
         self.period_us = 1e6/self.prescaler_to_frequency(current)
+
         return True
 
     def set_pwm_frequency(self, target_frequency_hz):
         old_prescaler = self.get_prescaler()
-        #todo sleep/pause, reinitialize
         # frequency = extclk/(4096*(prescaler + 1))
         # extclk/(f * 4096) - 1 = prescaler
         new_prescaler = self.frequency_to_prescaler(target_frequency_hz)
-        self.set_prescaler(new_prescaler)
+        if not self.set_prescaler(new_prescaler):
+            return False
         old_frequency = self.prescaler_to_frequency(old_prescaler)
         new_frequency = self.prescaler_to_frequency(new_prescaler)
         return new_frequency
