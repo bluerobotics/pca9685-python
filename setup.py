@@ -9,8 +9,13 @@ setup(
     author='Blue Robotics',
     url='https://github.com/bluerobotics/pca9685-python',
     packages=['pca9685'],
+    entry_points={
+        'console_scripts': [
+            'pca9685-test=pca9685.test:main',
+        ],
+    },
     install_requires=[
-        'RPi.GPIO',
         'smbus2',
+        'RPi.GPIO',
     ],
 )
