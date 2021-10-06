@@ -16,6 +16,8 @@ setup(
     },
     install_requires=[
         'smbus2',
-        'RPi.GPIO',
+        #'RPi.GPIO',
+        # binary distributions are only available for the alpha release
+        # use pip install RPi.GPIO --pre
     ],
 )
