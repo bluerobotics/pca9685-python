@@ -209,7 +209,6 @@ class PCA9685:
         data = []
         # 16 channels max
         for duty in duties[:16]:
-            duties 
             data.extend([0,0])
             data.extend(self.raw_to_data(duty))
         self.write(REG_LED0_ON_L, data)
