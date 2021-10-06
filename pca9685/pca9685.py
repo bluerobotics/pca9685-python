@@ -249,11 +249,11 @@ class PCA9685:
         return REG_LED0_OFF_L + (channel*4)
         
     def prescaler_to_frequency(self, prescaler):
-        return self.extclk/(4096*(prescaler + 1))
+        return self.extclk/(4096*(prescaler)) # todo check the math?
 
     # may not be exact
     def frequency_to_prescaler(self, frequency_hz):
-        return round(self.extclk/(frequency_hz*4096) - 1)
+        return round(self.extclk/(frequency_hz*4096) - 1) + 1 # todo check the math?
 
     def raw_to_pwm(self, raw):
         return round(raw*self.period_us/0xfff)
