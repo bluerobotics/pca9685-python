@@ -14,7 +14,7 @@ REG_ALL_LED_OFF_L = 0xfc
 REG_PRESCALE = 0xfe
 
 MODE1_SLEEP = 1 << 4
-MODE1_EXTCLK = 1
+MODE1_EXTCLK = 1 << 6
 MODE1_AI = 1 << 5 # enable auto-increment control register
 
 class RawAccess:
@@ -67,7 +67,6 @@ class PCA9685:
     def initialize(self):
         # todo reset (write 0xb6 to i2c address 00 - general call)
         self.write(REG_MODE1, [MODE1_SLEEP | MODE1_AI])
-        self.set_pwm_frequency(250)
 
     #########################
     # Prescaler Configuration
@@ -247,13 +246,16 @@ class PCA9685:
 
     def offreg(self, channel):
         return REG_LED0_OFF_L + (channel*4)
-        
+
+    # f(prescaler + 1) = extclk/(4096)
     def prescaler_to_frequency(self, prescaler):
-        return self.extclk/(4096*(prescaler)) # todo check the math?
+        return self.extclk/(4096*(prescaler + 1)) # todo check the math?
 
     # may not be exact
+    # datasheet section 7.2.5:
+    # prescaler = round(extclk/(4096*f)) - 1
     def frequency_to_prescaler(self, frequency_hz):
-        return round(self.extclk/(frequency_hz*4096) - 1) + 1 # todo check the math?
+        return round(self.extclk/(4096*frequency_hz)) - 1 # todo check the math?
 
     def raw_to_pwm(self, raw):
         return round(raw*self.period_us/0xfff)
