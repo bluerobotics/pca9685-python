@@ -67,12 +67,16 @@ class PCA9685:
     def initialize(self):
         # todo reset (write 0xb6 to i2c address 00 - general call)
         self.write(REG_MODE1, [MODE1_SLEEP | MODE1_AI])
+        self.get_prescaler()
 
     #########################
     # Prescaler Configuration
     #########################
     def get_prescaler(self):
-        return self._bus.read_i2c_block_data(_address, REG_PRESCALE, 1)[0]
+        prescaler = self._bus.read_i2c_block_data(_address, REG_PRESCALE, 1)[0]
+        # cache this value to be used in pwm to duty conversions
+        self.period_us = 1e6/self.prescaler_to_frequency(prescaler)
+        return prescaler
 
     def set_prescaler(self, prescaler):
         # pca must be in sleep mode
@@ -101,9 +105,6 @@ class PCA9685:
         if current != prescaler:
             #print("error writing new prescaler. wrote: %2x read %2x" % (prescaler, current))
             return False
-
-        # cache this value to be used in pwm to duty conversions
-        self.period_us = 1e6/self.prescaler_to_frequency(current)
 
         return True
 
