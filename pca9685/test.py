@@ -3,12 +3,11 @@
 def main():
     import argparse
     from pca9685 import PCA9685
-
     parser = argparse.ArgumentParser()
-    group1 = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument('--frequency', action='store', type=int, default=250)
+    group1 = parser.add_mutually_exclusive_group()
     group1.add_argument('--get', action='store', nargs='+', type=int)
     group1.add_argument('--set', action='store', nargs='+', type=int)
-    group1.add_argument('--frequency', action='store', type=int, default=250)
     args = parser.parse_args()
 
     pca = PCA9685()
@@ -18,7 +17,7 @@ def main():
     if args.get:
         for channel in args.get:
             print(f'channel {channel} pwm: {pca.pwm[channel]}') 
-    else:
+    elif args.set:
         for channel in args.set[:-1]:
             pca.pwm[channel] = args.set[-1]
 
