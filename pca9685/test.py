@@ -4,14 +4,17 @@ def main():
     import argparse
     from pca9685 import PCA9685
     parser = argparse.ArgumentParser()
-    parser.add_argument('--frequency', action='store', type=int, default=250)
+    parser.add_argument('--frequency', action='store', type=int, default=None)
     group1 = parser.add_mutually_exclusive_group()
     group1.add_argument('--get', action='store', nargs='+', type=int)
     group1.add_argument('--set', action='store', nargs='+', type=int)
     args = parser.parse_args()
 
     pca = PCA9685()
-    pca.set_pwm_frequency(args.frequency)
+
+    if args.frequency:
+        pca.set_pwm_frequency(args.frequency)
+
     pca.output_enable()
 
     if args.get:
