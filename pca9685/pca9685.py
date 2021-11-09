@@ -109,13 +109,13 @@ class PCA9685:
         return True
 
     def set_pwm_frequency(self, target_frequency_hz):
-        old_prescaler = self.get_prescaler()
         # frequency = extclk/(4096*(prescaler + 1))
         # extclk/(f * 4096) - 1 = prescaler
         new_prescaler = self.frequency_to_prescaler(target_frequency_hz)
         if not self.set_prescaler(new_prescaler):
-            return False
-        old_frequency = self.prescaler_to_frequency(old_prescaler)
+            old_prescaler = self.get_prescaler()
+            old_frequency = self.prescaler_to_frequency(old_prescaler)
+            return old_frequency
         new_frequency = self.prescaler_to_frequency(new_prescaler)
         return new_frequency
 
