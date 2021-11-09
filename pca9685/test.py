@@ -22,7 +22,10 @@ def main():
             print(f'channel {channel} pwm: {pca.pwm[channel]}') 
     elif args.set:
         for channel in args.set[:-1]:
-            pca.pwm[channel] = args.set[-1]
+            try:
+                pca.pwm[channel] = args.set[-1]
+            except Exception as e:
+                print(e)
 
 if __name__ == '__main__':
     main()
