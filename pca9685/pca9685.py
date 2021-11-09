@@ -194,8 +194,12 @@ class PCA9685:
     # write a single channel output value
     def channel_set_raw(self, channel, raw):
         data = self.raw_to_data(raw)
-        self.write(self.offreg(channel), data)
-    
+        offreg = self.offreg(channel)
+        self.write(offreg, data)
+        read = self.read(offreg, len(data))
+        if read != data:
+            raise Exception(f'pca9685 register write failed\noffreg:{offreg}\nwrote:{data}\nread:{read}')
+
     def channel_set_duty(self, channel, duty):
         raw = self.duty_to_raw(duty)
         self.channel_set_raw(channel, raw)
@@ -212,6 +216,9 @@ class PCA9685:
             data.extend([0,0])
             data.extend(self.raw_to_data(duty))
         self.write(REG_LED0_ON_L, data)
+        read = self.read(REG_LED0_ON_L, len(data))
+        if read != data:
+            raise Exception(f'pca9685 register write failed\nwrote:{data}\nread:{read}')
 
     def channels_set_duty(self, duties):
         raws = [self.duty_to_raw(duty) for duty in duties]
@@ -235,10 +242,16 @@ class PCA9685:
     #############
     # Bus Transactions
     #############
+    def read(self, register_address, nbytes):
+        data = self._bus.read_i2c_block_data(_address, register_address, nbytes)
+        #print("i2c read  0x%.2x: %s" % (register_address, [hex(d) for d in data]))
+        return data
+
     def write(self, register_address, data):
-        # print("i2c write 0x%.2x: %s" % (register_address, [hex(d) for d in data]))
-        data.insert(0, register_address)
-        msg = smbus2.i2c_msg.write(_address, data)
+        #print("i2c write 0x%.2x: %s" % (register_address, [hex(d) for d in data]))
+        data2 = data.copy()
+        data2.insert(0, register_address)
+        msg = smbus2.i2c_msg.write(_address, data2)
         self._bus.i2c_rdwr(msg)
 
     ##############
